@@ -28,7 +28,7 @@ async function checkUtilization(market: KaminoMarket, channel: Channel) {
   console.log(`SOL borrow TVL: ${borrows}`);
   console.log(`Utilization: ${Number(utilization.toFixed(2)) * 100}%`);
 
-  if (utilization < UTILIZATION_THRESHOLD) {
+  if (utilization * 100 < UTILIZATION_THRESHOLD) {
     await (channel as TextChannel).send(
       `<@&1274760310976286765> Il y a ${
         (utilization * deposits - borrows) / 1e9
