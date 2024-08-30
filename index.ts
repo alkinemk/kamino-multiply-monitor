@@ -1,12 +1,6 @@
-import {
-  Channel,
-  Client,
-  Events,
-  GatewayIntentBits,
-  TextChannel,
-} from "discord.js";
+import { Channel, Client, GatewayIntentBits, TextChannel } from "discord.js";
 import "dotenv/config";
-import { KaminoMarket, KaminoReserve } from "@kamino-finance/klend-sdk";
+import { KaminoMarket } from "@kamino-finance/klend-sdk";
 import { Connection, PublicKey } from "@solana/web3.js";
 
 const POLL_INTERVAL = 60000; // 1 minute in milliseconds
@@ -15,7 +9,24 @@ const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const CHANNEL_ID = process.env.CHANNEL_ID;
 const RPC_URL = process.env.RPC_URL;
 
-async function checkUtilization(market: KaminoMarket, channel: Channel) {
+async function checkUtilization(channel: Channel) {
+  if (!RPC_URL) {
+    throw new Error(
+      "RPC_URL is missing. Make sure RPC_URL is set in your .env file. "
+    );
+  }
+
+  const connection = new Connection(RPC_URL);
+  const market = await KaminoMarket.load(
+    connection,
+    new PublicKey("7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF"),
+    0
+  );
+
+  if (!market) {
+    throw new Error("Market is missing. ");
+  }
+
   const solReserve = await market.getReserveByMint(
     new PublicKey("So11111111111111111111111111111111111111112")
   );
@@ -67,19 +78,9 @@ async function checkUtilization(market: KaminoMarket, channel: Channel) {
     throw new Error("Invalid channel or not a text channel");
   }
 
-  const market = await KaminoMarket.load(
-    new Connection(RPC_URL),
-    new PublicKey("7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF"),
-    0
-  );
-
-  if (!market || !channel) return;
-
   // Initial check
-  await checkUtilization(market, channel);
+  await checkUtilization(channel);
 
   // Set up interval for polling
-  setInterval(() => checkUtilization(market, channel), POLL_INTERVAL);
-
-  await client.login(DISCORD_TOKEN);
+  setInterval(() => checkUtilization(channel), POLL_INTERVAL);
 })();
