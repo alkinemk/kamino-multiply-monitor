@@ -9,6 +9,8 @@ const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const CHANNEL_ID = process.env.CHANNEL_ID;
 const RPC_URL = process.env.RPC_URL;
 
+let loop = true;
+
 async function checkUtilization(channel: Channel) {
   if (!RPC_URL) {
     throw new Error(
@@ -33,18 +35,22 @@ async function checkUtilization(channel: Channel) {
 
   const deposits = Number(solReserve?.getTotalSupply()) / 1e9;
   const borrows = Number(solReserve?.getBorrowedAmount()) / 1e9;
-  let utilization = borrows / deposits;
+  const utilization = borrows / deposits;
+  const sol_capacity = deposits * (1 - utilization);
 
   console.log(`SOL deposit TVL: ${deposits}`);
   console.log(`SOL borrow TVL: ${borrows}`);
   console.log(`Utilization: ${Number(utilization.toFixed(2)) * 100}%`);
 
+  if (!loop) return;
+
   if (utilization * 100 < UTILIZATION_THRESHOLD) {
     await (channel as TextChannel).send(
-      `<@&1274760310976286765> Il y a ${
-        utilization * deposits - borrows
-      } SOL de dispo sur Multiply`
+      `<@&1274760310976286765> Il y a ${sol_capacity} SOL de dispo sur Multiply`
     );
+    loop = false;
+  } else {
+    loop = true;
   }
 }
 
