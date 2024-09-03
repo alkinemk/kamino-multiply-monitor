@@ -42,9 +42,8 @@ async function checkUtilization(channel: Channel) {
   console.log(`SOL borrow TVL: ${borrows}`);
   console.log(`Utilization: ${Number(utilization.toFixed(2)) * 100}%`);
 
-  if (!loop) return;
-
   if (utilization * 100 < UTILIZATION_THRESHOLD) {
+    if (!loop) return;
     await (channel as TextChannel).send(
       `<@&1274760310976286765> Il y a ${sol_capacity} SOL de dispo sur Multiply`
     );
