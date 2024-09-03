@@ -42,8 +42,8 @@ async function checkUtilization(channel: Channel) {
   if (utilization * 100 < UTILIZATION_THRESHOLD) {
     await (channel as TextChannel).send(
       `<@&1274760310976286765> Il y a ${
-        (utilization * deposits - borrows) / 1e9
-      } SOL de dispo sur Multiply%`
+        utilization * deposits - borrows
+      } SOL de dispo sur Multiply`
     );
   }
 }
