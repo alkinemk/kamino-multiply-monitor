@@ -36,11 +36,12 @@ async function checkUtilization(channel: Channel) {
   const deposits = Number(solReserve?.getTotalSupply()) / 1e9;
   const borrows = Number(solReserve?.getBorrowedAmount()) / 1e9;
   const utilization = borrows / deposits;
-  const sol_capacity = deposits * (1 - utilization);
+  const sol_capacity = deposits * utilization - borrows;
 
   console.log(`SOL deposit TVL: ${deposits}`);
   console.log(`SOL borrow TVL: ${borrows}`);
-  console.log(`Utilization: ${Number(utilization.toFixed(2)) * 100}%`);
+  console.log(`Utilization: ${Number(utilization) * 100}`);
+  console.log(`Capacity: ${sol_capacity}`);
 
   if (utilization * 100 < UTILIZATION_THRESHOLD) {
     if (!loop) return;
