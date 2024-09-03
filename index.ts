@@ -4,31 +4,27 @@ import { KaminoMarket } from "@kamino-finance/klend-sdk";
 import { Connection, PublicKey } from "@solana/web3.js";
 
 const POLL_INTERVAL = 60000; // 1 minute in milliseconds
-const UTILIZATION_THRESHOLD = 86;
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const CHANNEL_ID = process.env.CHANNEL_ID;
 const RPC_URL = process.env.RPC_URL;
 
-let loop = true;
+if (!DISCORD_TOKEN || !CHANNEL_ID || !RPC_URL) {
+  throw new Error("Missing environment variables. Check your .env file.");
+}
 
-async function checkUtilization(channel: Channel) {
-  if (!RPC_URL) {
-    throw new Error(
-      "RPC_URL is missing. Make sure RPC_URL is set in your .env file. "
-    );
-  }
+const connection = new Connection(RPC_URL);
+let multiplyLoop = true;
+let pyusdLoop = true;
 
-  const connection = new Connection(RPC_URL);
-  const market = await KaminoMarket.load(
+async function loadMarket() {
+  return await KaminoMarket.load(
     connection,
     new PublicKey("7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF"),
     0
   );
+}
 
-  if (!market) {
-    throw new Error("Market is missing. ");
-  }
-
+async function checkMultiply(channel: TextChannel, market: KaminoMarket) {
   const solReserve = await market.getReserveByMint(
     new PublicKey("So11111111111111111111111111111111111111112")
   );
@@ -43,36 +39,50 @@ async function checkUtilization(channel: Channel) {
   console.log(`Utilization: ${Number(utilization) * 100}`);
   console.log(`Capacity: ${sol_capacity}`);
 
-  if (utilization * 100 < UTILIZATION_THRESHOLD) {
-    if (!loop) return;
-    await (channel as TextChannel).send(
+  if (sol_capacity > 10 && multiplyLoop) {
+    await channel.send(
       `<@&1274760310976286765> Il y a ${sol_capacity} SOL de dispo sur Multiply`
     );
-    loop = false;
-  } else {
-    loop = true;
+    multiplyLoop = false;
+  } else if (sol_capacity <= 10) {
+    multiplyLoop = true;
   }
 }
 
+async function checkPyusdDeposits(channel: TextChannel, market: KaminoMarket) {
+  const pyusdReserve = await market.getReserveByMint(
+    new PublicKey("2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo")
+  );
+
+  const deposits = Number(pyusdReserve?.getTotalSupply()) / 1e9;
+  const pyusd_deposit_capacity = 400000 - deposits;
+
+  console.log(`PYUSD deposit TVL: ${deposits}`);
+  console.log(`PYUSD deposit capacity: ${pyusd_deposit_capacity}`);
+
+  if (pyusd_deposit_capacity > 100000 && pyusdLoop) {
+    await channel.send(
+      `<@270258388586201089> ${pyusd_deposit_capacity} PYUSD de borrow disponibles`
+    );
+    pyusdLoop = false;
+  } else if (pyusd_deposit_capacity <= 100000) {
+    pyusdLoop = true;
+  }
+}
+
+async function runChecks(channel: TextChannel) {
+  const market = await loadMarket();
+  if (!market) {
+    throw new Error("Failed to load market");
+  }
+
+  await Promise.all([
+    checkMultiply(channel, market),
+    checkPyusdDeposits(channel, market),
+  ]);
+}
+
 (async () => {
-  if (!DISCORD_TOKEN) {
-    throw new Error(
-      "DISCORD_TOKEN is missing. Make sure DISCORD_TOKEN is set in your .env file."
-    );
-  }
-
-  if (!CHANNEL_ID) {
-    throw new Error(
-      "CHANNEL_ID is missing. Make sure CHANNEL_ID is set in your .env file. "
-    );
-  }
-
-  if (!RPC_URL) {
-    throw new Error(
-      "RPC_URL is missing. Make sure RPC_URL is set in your .env file. "
-    );
-  }
-
   const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
   console.log("Attempting to log in to Discord...");
@@ -85,8 +95,8 @@ async function checkUtilization(channel: Channel) {
   }
 
   // Initial check
-  await checkUtilization(channel);
+  await runChecks(channel as TextChannel);
 
   // Set up interval for polling
-  setInterval(() => checkUtilization(channel), POLL_INTERVAL);
+  setInterval(() => runChecks(channel as TextChannel), POLL_INTERVAL);
 })();
