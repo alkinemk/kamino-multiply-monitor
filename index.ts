@@ -32,7 +32,7 @@ async function checkMultiply(channel: TextChannel, market: KaminoMarket) {
   const deposits = Number(solReserve?.getTotalSupply()) / 1e9;
   const borrows = Number(solReserve?.getBorrowedAmount()) / 1e9;
   const utilization = borrows / deposits;
-  const sol_capacity = deposits * utilization - borrows;
+  const sol_capacity = deposits * (86 / 100) - borrows;
 
   console.log(`SOL deposit TVL: ${deposits}`);
   console.log(`SOL borrow TVL: ${borrows}`);
