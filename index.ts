@@ -78,7 +78,7 @@ async function runChecks(channel: TextChannel) {
 
   await Promise.all([
     checkMultiply(channel, market),
-    checkPyusdDeposits(channel, market),
+    // checkPyusdDeposits(channel, market),
   ]);
 }
 
