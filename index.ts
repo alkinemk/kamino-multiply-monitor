@@ -39,7 +39,7 @@ async function checkMultiply(channel: TextChannel, market: KaminoMarket) {
   console.log(`Utilization: ${Number(utilization) * 100}`);
   console.log(`Capacity: ${sol_capacity}`);
 
-  if (sol_capacity > 10 && multiplyLoop) {
+  if (sol_capacity > 500 && multiplyLoop) {
     await channel.send(
       `<@&1274760310976286765> Il y a ${sol_capacity} SOL de dispo sur Multiply`
     );
