@@ -44,7 +44,7 @@ async function checkMultiply(channel: TextChannel, market: KaminoMarket) {
       `<@&1274760310976286765> Il y a ${sol_capacity} SOL de dispo sur Multiply`
     );
     multiplyLoop = false;
-  } else if (sol_capacity <= 10) {
+  } else if (sol_capacity <= 500) {
     multiplyLoop = true;
   }
 }
